@@ -144,6 +144,9 @@
  * for subsequent builds `watch` parameters will be applied.
  * Defaults to `false`.
  * Namespace: `watch`.
+ *
+ * @property {boolean} justOnce
+ * Allows it to run just in the first call.
  */
 
 /**
@@ -278,8 +281,8 @@ class Plugin {
         this.webpackHooks = {
             beforeRun: {
                 name: {
-                    v4: 'beforeRun',
-                    v3: 'before-run'
+                    v4: 'beforeCompile',
+                    v3: 'before-compile'
                 },
                 callsCount: 0,
                 increaseCallsCount: () => {
@@ -564,6 +567,14 @@ class Plugin {
          */
         const method = (compilerOrCompilation, callback) => {
             const params = hook.getParams(compilerOrCompilation.options || {});
+
+            // Check if it's running just once, and the calls count is major than zero
+            if (params.justOnce && hook.callsCount > 0) {
+                this.loggerInfo.add(`Ignoring subsequent run for ${hook.name.v3}`);
+
+                return callback();
+            }
+
             const cllbck = () => {
                 hook.increaseCallsCount();
                 callback();
